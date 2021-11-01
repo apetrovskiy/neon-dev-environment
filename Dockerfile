@@ -43,15 +43,3 @@ COPY --from=solana /opt/solana/bin/solana /opt/solana/bin/solana-keygen /opt/sol
 COPY --from=contracts /opt/ /opt/solidity/
 COPY --from=contracts /usr/bin/solc /usr/bin/solc
 
-RUN solana-keygen new --no-passphrase
-COPY neon-evm/evm_loader/*.py \
-     neon-evm/evm_loader/deploy-test.sh \
-     neon-evm/evm_loader/test_token_keypair \
-     neon-evm/evm_loader/test_token_owner \
-     neon-evm/evm_loader/test_token_config.yml /spl/bin/
-     
-COPY proxy-model.py/requirements.txt /tmp/proxy-requirements.txt
-RUN pip3 install -r /tmp/proxy-requirements.txt
-ENV PATH=$PATH:/opt/neon-dev-env/neon-evm/evm_loader/target/release
-#RUN solana airdrop 100500
-

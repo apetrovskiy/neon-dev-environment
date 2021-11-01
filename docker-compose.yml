@@ -20,12 +20,14 @@ services:
       command: ./deploy-evm.sh local
       
    proxy:
-      <<: *x-base-builder
+      build:
+         context: ./proxy-model.py/
+         dockerfile: Dockerfile
       environment:
          CONFIG: local
          NEW_USER_AIRDROP_AMOUNT: 10
       env_file: neon-config.env
-      working_dir: /opt/neon-dev-env/proxy-model.py
+      working_dir: /opt/
       network_mode: host
       command: ./proxy/run-proxy.sh
       
