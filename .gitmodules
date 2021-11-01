@@ -1,0 +1,8 @@
+[submodule "neon-evm"]
+	path = neon-evm
+	url = https://github.com/neonlabsorg/neon-evm.git
+	branch = develop
+[submodule "proxy-model.py"]
+	path = proxy-model.py
+	url = https://github.com/neonlabsorg/proxy-model.py.git
+	branch = develop

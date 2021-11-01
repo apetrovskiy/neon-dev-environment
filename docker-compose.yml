@@ -1,0 +1,32 @@
+version: '3'
+
+x-base-builder: &x-base-builder
+   build:
+      context: .
+      dockerfile: Dockerfile
+   image: evm-builder
+   working_dir: /opt/neon-dev-env
+   volumes:
+         - .:/opt/neon-dev-env
+   
+services:
+   build-evm:
+      <<: *x-base-builder
+      command: ./build-evm.sh
+      
+   deploy-evm:
+      <<: *x-base-builder
+      network_mode: host
+      command: ./deploy-evm.sh local
+      
+   proxy:
+      <<: *x-base-builder
+      environment:
+         CONFIG: local
+         NEW_USER_AIRDROP_AMOUNT: 10
+      env_file: neon-config.env
+      working_dir: /opt/neon-dev-env/proxy-model.py
+      network_mode: host
+      command: ./proxy/run-proxy.sh
+      
+
