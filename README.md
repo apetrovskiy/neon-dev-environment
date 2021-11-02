@@ -19,6 +19,14 @@ Sources located under *./neon-evm* directory will be used
 that you should run command as superuser. This issue caused by files created from inside container
 previously
 
+## Running solana
+>docker-compose run solana
+
+Or
+>docker-compose run -d solana
+
+If you prefer to run container in detached mode
+
 ## Deploying neon-evm to local solana cluster
 >docker-compose run deploy-evm
 

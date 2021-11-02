@@ -10,14 +10,29 @@ x-base-builder: &x-base-builder
          - .:/opt/neon-dev-env
    
 services:
+   solana:
+      container_name: solana
+      image: neonlabsorg/solana:v1.7.9-resources
+      environment:
+         - SOLANA_URL=http://localhost:8899
+         - RUST_LOG=solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+      #hostname: solana
+      expose:
+         - "8899"
+         - "9900"
+         - "8900"
+         - "8001"
+         - "8001-8009/udp"
+      network_mode: host
+
    build-evm:
       <<: *x-base-builder
       command: ./build-evm.sh
       
    deploy-evm:
       <<: *x-base-builder
-      network_mode: host
       command: ./deploy-evm.sh local
+      network_mode: host
       
    proxy:
       build:
@@ -28,7 +43,8 @@ services:
          NEW_USER_AIRDROP_AMOUNT: 10
       env_file: neon-config.env
       working_dir: /opt/
-      network_mode: host
       command: ./proxy/run-proxy.sh
-      
+      network_mode: host
+      expose:
+         - "9090"
 
