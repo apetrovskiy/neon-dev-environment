@@ -3,7 +3,7 @@ This is integration repository containing scripts for development of neon-evm an
 It is aimed to simplify building and deployment of different components of neon-evm infrastructure from a single place
 
 **NOTE** Always update repository with *--recursive* flag:
-> git clone --recursive [path-to-repo]
+> git clone --recursive https://github.com/ivandzen/neon-dev-environment.git
 
 If you already have cloned a repository and now want to load it’s submodules you have to use submodule update:
 > git submodule update --init --recursive
