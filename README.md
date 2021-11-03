@@ -10,7 +10,7 @@ If you already have cloned a repository and now want to load it’s submodules y
 
 # Using
 
-## Building neon-evm
+## 1. Building neon-evm
 >docker-compose run build-evm
 
 Sources located under *./neon-evm* directory will be used
@@ -19,7 +19,7 @@ Sources located under *./neon-evm* directory will be used
 that you should run command as superuser. This issue caused by files created from inside container
 previously
 
-## Running solana
+## 2. Running solana
 >docker-compose run solana
 
 Or
@@ -27,7 +27,7 @@ Or
 
 If you prefer to run container in detached mode
 
-## Deploying neon-evm to local solana cluster
+## 3. Deploying neon-evm to local solana cluster
 >docker-compose run deploy-evm
 
 There with be file *./neon-config.env* after successful deployment. 
@@ -35,7 +35,7 @@ It contains all the parameters necessary for starting proxy server
 
 **NOTE** build-evm must be performed at least once
 
-## Starting proxy server
+## 4. Starting proxy server
 >docker-compose run proxy
 
 **NOTE** ./neon-config.env file must exist
