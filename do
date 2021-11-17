@@ -1,26 +1,13 @@
 #!/bin/bash
 
-function setup_env() {
-  cd ./neon-evm
-  echo ""
-  echo "neon-evm branch:"
-  git branch --show-current
-  export EVM_LOADER_REVISION=$(git rev-parse HEAD)
-  echo "EVM_LOADER_REVISION=$EVM_LOADER_REVISION"
-  cd ../proxy-model.py
-  echo ""
-  echo "proxy-model.py branch:"
-  git branch --show-current
-  PROXY_REVISION=$(git rev-parse HEAD)
-  echo "PROXY_REVISION=$PROXY_REVISION"
-  cd ../
-}
-
 function build_containers() {
   docker-compose -f docker-compose.yml build
 }
 
 function build_evm() {
+  cd ./neon-evm
+  export NEON_REVISION=$(git rev-parse HEAD)
+  cd ../
   docker-compose -f docker-compose.yml run evm_builder
 }
 

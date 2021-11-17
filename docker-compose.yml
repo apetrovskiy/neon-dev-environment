@@ -25,24 +25,39 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
-
+      
+  cli_builder:
+    container_name: cli_builder
+    build:
+      context: ./evm_builder
+      dockerfile: Dockerfile
+    image: evm_builder:latest
+    environment:
+       NEON_REVISION: ${NEON_REVISION:-latest}
+    volumes:
+       - ./neon-evm/evm_loader/:/opt/evm_loader/
+    working_dir: /opt/evm_loader/cli
+    entrypoint: cargo build --release
+      
   evm_builder:
     container_name: evm_builder
     build:
-      context: .
+      context: ./evm_builder
       dockerfile: Dockerfile
-    image: evm-builder
-    working_dir: /opt/neon-dev-env
+    image: evm_builder:latest
+    environment:
+       NEON_REVISION: ${NEON_REVISION:-latest}
     volumes:
-      - .:/opt/neon-dev-env
-    command: ./build-evm.sh
-      
+       - ./neon-evm/evm_loader/:/opt/evm_loader/
+    working_dir: /opt/evm_loader
+    entrypoint: >
+      bash -c "cd program && /opt/evm_loader/ci_checks.sh
+      && cargo build --release
+      && cargo build-bpf --features no-logs"
+
   evm_loader:
     container_name: evm_loader
-    build:
-      context: ./neon-evm/
-      dockerfile: Dockerfile
-    image: neonlabsorg/evm_loader:dev
+    image: neonlabsorg/evm_loader:${EVM_LOADER_REVISION:-latest}
     environment:
       - SOLANA_URL=http://solana:8899
     networks:
@@ -54,7 +69,6 @@ services:
     volumes:
       - ./neon-evm/evm_loader/target/release/neon-cli:/opt/neon-cli
       - ./neon-evm/evm_loader/target/deploy/evm_loader.so:/opt/evm_loader.so
-      - ./neon-evm/evm_loader/evm_loader-keypair.json:/opt/evm_loader-keypair.json
 
   postgres:
     container_name: postgres
@@ -78,10 +92,7 @@ services:
 
   proxy:
     container_name: proxy
-    build:
-      context: ./proxy-model.py/
-      dockerfile: Dockerfile
-    image: neonlabsorg/proxy:dev
+    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
     environment:
       SOLANA_URL: http://solana:8899
       POSTGRES_DB: neon-db
@@ -101,24 +112,27 @@ services:
       - net
     entrypoint: proxy/run-test-proxy.sh
     volumes:
-      - ./proxy-model.py/:/opt/
       - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
-      
+      - ./proxy-model.py:/opt
+
   proxy-test:
     container_name: proxy-test
-    build:
-      context: ./proxy-model.py/
-      dockerfile: Dockerfile
-    image: neonlabsorg/proxy:dev
+    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
     environment:
-      PROXY_URL: http://proxy:9090/solana
       SOLANA_URL: http://solana:8899
-      EXTRA_GAS: 100000
+      PROXY_URL: http://proxy:9090/solana
       EVM_LOADER: 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
-    entrypoint: proxy/deploy-test.sh
+      EXTRA_GAS: 100000
+    hostname: proxy-test
+    depends_on:
+      - proxy
     networks:
       - net
-      
+    entrypoint: proxy/deploy-test.sh test_eth_sendRawTransaction.py
+    volumes:
+      - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
+      - ./proxy-model.py:/opt
+
 networks:
   net:
 
