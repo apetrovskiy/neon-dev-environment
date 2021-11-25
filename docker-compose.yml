@@ -119,7 +119,7 @@ services:
       - proxy
     networks:
       - net
-    entrypoint: proxy/deploy-test.sh test_airdropper.py
+    entrypoint: proxy/deploy-test.sh
     volumes:
       - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
       - ./proxy-model.py:/opt
