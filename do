@@ -8,11 +8,7 @@ function build_evm() {
   cd ./neon-evm
   export NEON_REVISION=$(git rev-parse HEAD)
   cd ../
-  docker-compose -f docker-compose.yml run evm_builder
-}
-
-function deploy_evm() {
-  docker-compose -f docker-compose.yml run evm_loader
+  docker-compose -f docker-compose.yml run builder
 }
 
 function stop() {
@@ -43,14 +39,30 @@ function exec() {
   docker exec $1 "${@:2}"
 }
 
-function save_logs() {
+function save_proxy_logs() {
   if docker logs proxy >proxy.log 2>&1; then
     echo "proxy logs saved";
     grep 'get_measurements' <proxy.log >measurements.log
   fi
+}
 
+function save_solana_logs() {
   if docker logs solana >solana.log 2>&1; then echo "solana logs saved"; fi
+}
+
+function save_evm_loader_logs() {
   if docker logs evm_loader >evm_loader.log 2>&1; then echo "evm_loader logs saved"; fi
+}
+
+function save_logs() {
+  SERVICE_NAME="$1"
+  if [ -z "$SERVICE_NAME" ]; then
+    save_proxy_logs
+    save_solana_logs
+    save_evm_loader_logs
+    exit 0
+  fi
+  save_${SERVICE_NAME}_logs
 }
 
 function stop_all() {

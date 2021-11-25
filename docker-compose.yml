@@ -26,36 +26,23 @@ services:
       retries: 10
       start_period: 10s
       
-  cli_builder:
-    container_name: cli_builder
-    build:
-      context: ./evm_builder
-      dockerfile: Dockerfile
-    image: evm_builder:latest
-    environment:
-       NEON_REVISION: ${NEON_REVISION:-latest}
-    volumes:
-       - ./neon-evm/evm_loader/:/opt/evm_loader/
-    working_dir: /opt/evm_loader/cli
-    entrypoint: cargo build --release
-      
-  evm_builder:
+  builder:
     container_name: evm_builder
     build:
-      context: ./evm_builder
-      dockerfile: Dockerfile
+      context: ./images
+      dockerfile: Builder-Dockerfile
     image: evm_builder:latest
     environment:
-       NEON_REVISION: ${NEON_REVISION:-latest}
+      NEON_REVISION: ${NEON_REVISION:-latest}
     volumes:
-       - ./neon-evm/evm_loader/:/opt/evm_loader/
+      - ./neon-evm/evm_loader/:/opt/evm_loader/
     working_dir: /opt/evm_loader
     entrypoint: >
       bash -c "cd program && /opt/evm_loader/ci_checks.sh
-      && cargo build --release
+      && cargo build --release --all
       && cargo build-bpf --features no-logs"
 
-  evm_loader:
+  deploy-evm:
     container_name: evm_loader
     image: neonlabsorg/evm_loader:${EVM_LOADER_REVISION:-latest}
     environment:
@@ -80,7 +67,7 @@ services:
       POSTGRES_PASSWORD: neon-proxy-pass
     hostname: postgres
     healthcheck:
-      test: [ CMD-SHELL, "pg_isready" ]
+      test: [ CMD-SHELL, "pg_isready -h postgres -p 5432" ]
       interval: 5s
       timeout: 10s
       retries: 10
@@ -123,12 +110,16 @@ services:
       PROXY_URL: http://proxy:9090/solana
       EVM_LOADER: 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
       EXTRA_GAS: 100000
+      POSTGRES_DB: neon-db
+      POSTGRES_USER: neon-proxy
+      POSTGRES_PASSWORD: neon-proxy-pass
+      POSTGRES_HOST: postgres
     hostname: proxy-test
     depends_on:
       - proxy
     networks:
       - net
-    entrypoint: proxy/deploy-test.sh test_eth_sendRawTransaction.py
+    entrypoint: proxy/deploy-test.sh test_airdropper.py
     volumes:
       - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
       - ./proxy-model.py:/opt
