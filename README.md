@@ -14,7 +14,6 @@ It is highly recomended to install latest version of docker-compose following in
 https://docs.docker.com/compose/install/
 
 ##Services
-
 Mostly, this repository is about one file - docker-compose.yml. This compose-file contains descriptions of
 docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process. Compose 
 file contains next services:
