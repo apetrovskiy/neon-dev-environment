@@ -171,30 +171,6 @@ services:
       - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
       - ./proxy-model.py:/opt
       
-  solana-indexer:
-    container_name: solana-indexer
-    build:
-      context: ./solana-indexer
-      dockerfile: Dockerfile
-    image: neonlabsorg/solana-indexer:${REVISION:-latest}
-    environment:
-      SOLANA_URL: http://solana:8899
-      EVM_LOADER_ID: 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
-      POSTGRES_DB: neon-db
-      POSTGRES_USER: neon-proxy
-      POSTGRES_PASSWORD: neon-proxy-pass
-      POSTGRES_HOST: postgres
-    hostname: solana-indexer
-    depends_on:
-      postgres:
-        condition: service_healthy
-      solana:
-        condition: service_healthy
-    entrypoint: python3 ./prototype.py
-    networks:
-      - net
-    volumes:
-      - ./solana-indexer:/opt
 
   proxy-test:
     container_name: proxy-test
