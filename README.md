@@ -9,7 +9,6 @@ If you already have cloned a repository and now want to load it’s submodules y
 #Using
 
 ##Install docker-compose
-
 It is highly recomended to install latest version of docker-compose following instructions for your OS by this link:
 https://docs.docker.com/compose/install/
 
