@@ -218,9 +218,35 @@ services:
       POSTGRES_USER: neon-proxy
       POSTGRES_PASSWORD: neon-proxy-pass
       POSTGRES_HOST: postgres
-      NEW_USER_AIRDROP_AMOUNT: 0 #3000
-      TESTNAME: erc20_wrapper_contract
+      #TESTNAME: account_whitelist
+      #TESTNAME: airdropper_integration
+      #TESTNAME: airdropper
+      #TESTNAME: contract_reverting
+      #TESTNAME: create_account_block
+      #TESTNAME: environment
+      #TESTNAME: erc20_wrapper_contract
+      #TESTNAME: eth_estimateGass
+      #TESTNAME: eth_getBlockByNumber
+      #TESTNAME: eth_getLogs
+      #TESTNAME: eth_sendRawTransaction
+      #TESTNAME: gas_price_calculator
+      #TESTNAME: indexer_work
+      #TESTNAME: neon_cli_version
+      #TESTNAME: neon_faucet
+      #TESTNAME: neon_proxy_version
       #TESTNAME: neon_token
+      #TESTNAME: neon_tx_sender
+      #TESTNAME: operator_spending
+      #TESTNAME: permission_token
+      #TESTNAME: pyth_network_client
+      #TESTNAME: query_account_contract
+      #TESTNAME: read_only_accounts
+      #TESTNAME: resize_storage_account
+      #TESTNAME: retry_on_blocked_accounts
+      #TESTNAME: trx_receipts_storage
+      #TESTNAME: user_stories
+      #TESTNAME: utils
+      #TESTNAME: web3_clientVersion
     hostname: proxy-test
     depends_on:
       - proxy
