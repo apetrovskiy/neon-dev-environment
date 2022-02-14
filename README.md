@@ -18,7 +18,7 @@ Mostly, this repository is about one file - **docker-compose.yml**. This compose
 docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process.
 
 **NOTE!** Run this commands from current directory neon-dev-environment before starting to use any other commands:
-> docker-compose pull
+> docker-compose pull solana deploy-evm postgres proxy
 
 > docker-compose build builder
 
