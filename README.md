@@ -28,6 +28,8 @@ Solana development cluster. Usually one have to run this service once and then w
 Running solana is simple as:
 > docker-compose up -d solana
 
+**NOTE:** running solana service is not necessary as it will implicitely be deployed when running **deploy-evm** service
+
 ### builder
 This service aimed for building evm_loader and all it's linked tools (neon-cli, faucet, etc.). When running, 
 service attaches neon-dev submodule as volume inside container, and executes cargo build upon it's sources. 
@@ -60,4 +62,7 @@ You can start proxy tests using command:
 > docker-compose up proxy-test
 
 Specify service's environment variable TESTNAME in docker-compose.yml if you want to start particular test
+
+# Development
+As you can notice, this repository pulls neon-evm and proxy-model.py as submodules. One should use this subdirectories as main source code base to work with. You can easily make changes in any submodule file then build new artifacts (if needed) and restart corresponding service to immediately debug/test your changes.
 
