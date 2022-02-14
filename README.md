@@ -19,6 +19,7 @@ docker-services fitted for fast rebuild-deploy cycles that happens oftenly durin
 
 **NOTE!** Run this commands from current directory neon-dev-environment before starting to use any other commands:
 > docker-compose pull
+
 > docker-compose build builder
 
 ## Services
