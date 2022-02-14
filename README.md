@@ -1,3 +1,4 @@
+
 #Cloning
 
 **NOTE** Always update repository with *--recursive* flag:
@@ -37,8 +38,7 @@ You can deploy evm_loader after it had been successfully built with next command
 To start proxy one should run command:
 > docker-compose up -d proxy
 
-Proxy service also uses volumes to attach source code and prebuilt utilities (neon-cli, faucet) inside container. So
-it will always use latest versions with your changes from neon-evm repository.
+Proxy service uses volumes to attach build artifacts produced by builder service into container therefore replacing files of original evm_loader image. So it will always use latest versions with your changes from neon-evm repository.
 
 **NOTE**: This command will not deploy evm_loader by itself (as it is implemented in proxy/docker-compose-test.yml for example).
 So you should perform deployment by yourself using previous commands.
