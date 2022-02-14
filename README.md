@@ -1,3 +1,11 @@
+# Brief description
+Mostly, this repository is about one file - **docker-compose.yml**. This compose-file contains descriptions of
+docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process.
+
+# Requirements
+It is highly recomended to install latest versions of docker and docker-compose following instructions for your OS by this links:
+- docker https://docs.docker.com/engine/install/
+- docker-compose https://docs.docker.com/compose/install/
 
 # Cloning
 
@@ -9,17 +17,9 @@ If you already have cloned a repository and now want to load it’s submodules y
 
 # Using
 
-## Install docker-compose
-It is highly recomended to install latest version of docker-compose following instructions for your OS by this link:
-https://docs.docker.com/compose/install/
-
-## Brief description
-Mostly, this repository is about one file - **docker-compose.yml**. This compose-file contains descriptions of
-docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process.
-
 **NOTE!** Run this commands from current directory neon-dev-environment before starting to use any other commands:
 > docker-compose pull --include-deps deploy-evm proxy proxy-test 
-
+>
 > docker-compose build builder
 
 ## Services
