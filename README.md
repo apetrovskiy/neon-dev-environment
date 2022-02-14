@@ -1,7 +1,7 @@
 
 #Cloning
 
-**NOTE** Always update repository with *--recursive* flag:
+Update repository with *--recursive* flag:
 > git clone --recursive https://github.com/ivandzen/neon-dev-environment.git
 
 If you already have cloned a repository and now want to load it’s submodules you have to use submodule update:
@@ -13,11 +13,14 @@ If you already have cloned a repository and now want to load it’s submodules y
 It is highly recomended to install latest version of docker-compose following instructions for your OS by this link:
 https://docs.docker.com/compose/install/
 
-##Services
-Mostly, this repository is about one file - docker-compose.yml. This compose-file contains descriptions of
-docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process. Compose 
-file contains next services:
+##Brief description
+Mostly, this repository is about one file - **docker-compose.yml**. This compose-file contains descriptions of
+docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process.
 
+**NOTE!** Run this commands from current directory neon-dev-environment before starting to use any other commands:
+> docker-compose pull
+
+##Services
 ###solana
 Solana development cluster. Usually one have to run this service once and then work with this instance. 
 Running solana is simple as:
@@ -49,4 +52,6 @@ To restart proxy service with latest changes use command:
 ###proxy-test
 You can start proxy tests using command:
 > docker-compose up proxy-test
+
+Specify service's environment variable TESTNAME in docker-compose.yml if you want to start particular test
 
