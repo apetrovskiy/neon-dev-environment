@@ -1,5 +1,16 @@
 version: "3"
 
+x-builder-common: &x-builder-common
+    build:
+      context: ./images
+      dockerfile: Builder-Dockerfile
+    image: evm_builder:latest
+    environment:
+      NEON_REVISION: ${NEON_REVISION:-latest}
+    volumes:
+      - ./neon-evm/evm_loader/:/opt/evm_loader/
+    working_dir: /opt/evm_loader
+
 services:
   solana:
     container_name: solana
@@ -28,20 +39,17 @@ services:
       start_period: 10s
       
   builder:
-    container_name: evm_builder
-    build:
-      context: ./images
-      dockerfile: Builder-Dockerfile
-    image: evm_builder:latest
-    environment:
-      NEON_REVISION: ${NEON_REVISION:-latest}
-    volumes:
-      - ./neon-evm/evm_loader/:/opt/evm_loader/
-    working_dir: /opt/evm_loader
+    <<: *x-builder-common
+    container_name: buider
     entrypoint: >
       bash -c "cd program && /opt/evm_loader/ci_checks.sh
       && cargo build --release --all
       && cargo build-bpf --features no-logs"
+    
+  cleaner:  
+    <<: *x-builder-common
+    container_name: cleaner
+    entrypoint: cargo clean
 
   deploy-evm:
     container_name: evm_loader
