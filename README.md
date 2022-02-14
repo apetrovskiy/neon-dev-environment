@@ -1,6 +1,6 @@
 # Brief description
 Mostly, this repository is about one file - **docker-compose.yml**. This compose-file contains descriptions of
-docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process.
+docker-services fitted for fast rebuild-deploy cycles that happens oftenly during development process. All services exists in a single virtual network. Some services also exposes ports to host machine
 
 # Requirements
 It is highly recomended to install latest versions of docker and docker-compose following instructions for your OS by this links:
@@ -33,7 +33,11 @@ This service aimed for building evm_loader and all it's linked tools (neon-cli, 
 service attaches neon-dev submodule as volume inside container, and executes cargo build upon it's sources. 
 All artifacts then will be placed under *neon-evm/evm_loader/target* directory. This approach provides fast rebuilds 
 in case when only several files was changed. Run this command to build/rebuild neon-evm:
-> docker-compose run builder
+> docker-compose up builder
+
+### cleaner
+Cleaner service removes all artifacts produced by builder
+> docker-compose up cleaner
 
 ### deploy-evm 
 You can deploy evm_loader after it had been successfully built with next command: 
