@@ -12,6 +12,19 @@ x-builder-common: &x-builder-common
     working_dir: /opt/evm_loader
 
 services:
+  builder:
+    <<: *x-builder-common
+    container_name: builder
+    entrypoint: >
+      bash -c "cd program && /opt/evm_loader/ci_checks.sh
+      && cargo build --release --all --features tracing
+      && cargo build-bpf"
+    
+  cleaner:
+    <<: *x-builder-common
+    container_name: cleaner
+    entrypoint: cargo clean
+    
   solana:
     container_name: solana
     image: neonlabsorg/solana:${SOLANA_REVISION:-v1.8.12-testnet}
@@ -29,7 +42,6 @@ services:
       - "8001-8009/udp"
     networks:
       - net
-    entrypoint:  bash -c "./run.sh | grep -v 'Program Vote111111111111111111111111111111111111111'"
     healthcheck:
       # Must be available from outside (calling without -u causes premature result)
       test: [ CMD-SHELL, "solana cluster-version -u http://solana:8899" ]
@@ -37,19 +49,6 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
-      
-  builder:
-    <<: *x-builder-common
-    container_name: buider
-    entrypoint: >
-      bash -c "cd program && /opt/evm_loader/ci_checks.sh
-      && cargo build --release --all
-      && cargo build-bpf --features no-logs"
-    
-  cleaner:  
-    <<: *x-builder-common
-    container_name: cleaner
-    entrypoint: cargo clean
 
   deploy-evm:
     container_name: evm_loader
@@ -234,7 +233,7 @@ services:
       #TESTNAME: neon_cli_version
       #TESTNAME: neon_faucet
       #TESTNAME: neon_proxy_version
-      #TESTNAME: neon_token
+      TESTNAME: neon_token
       #TESTNAME: neon_tx_sender
       #TESTNAME: operator_spending
       #TESTNAME: permission_token
