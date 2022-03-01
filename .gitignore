@@ -1,6 +1,7 @@
 /.idea/*
 /*
 !docker-compose.yml
+!docker-compose-tracer.yml
 !README.md
 !.dockerignore
 !.gitignore
