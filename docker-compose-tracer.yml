@@ -56,8 +56,9 @@ services:
     
   validator:
     container_name: validator
-    image: validator-account-dumper:latest
+    image: neonlabsorg/solana:${SOLANA_REVISION:-v1.8.12-testnet}
     environment:
+      NEON_REVISION: ${NEON_REVISION:-tracing}
       SOLANA_URL: http://validator:8899
       RUST_LOG: solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
     hostname: validator
@@ -73,6 +74,11 @@ services:
       - net
     volumes:
       - ./solana-account-dumper/scripts/run.sh:/opt/solana/run.sh
+      - ./solana-account-dumper/target/release/solana:/opt/solana/bin/solana
+      - ./solana-account-dumper/target/release/solana-faucet:/opt/solana/bin/solana-faucet
+      - ./solana-account-dumper/target/release/solana-keygen:/opt/solana/bin/solana-keygen
+      - ./solana-account-dumper/target/release/solana-validator:/opt/solana/bin/solana-validator
+      - ./solana-account-dumper/target/release/solana-genesis:/opt/solana/bin/solana-genesis
     depends_on:
       tracer_db:
         condition: service_healthy
