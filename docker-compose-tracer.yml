@@ -97,6 +97,17 @@ services:
       - ./neon-evm/evm_loader/target/release/neon-cli:/opt/neon-cli
       - ./neon-evm/evm_loader/target/deploy/evm_loader.so:/opt/evm_loader.so
 
+  neon-tracer:
+    container_name: tracer-api
+    hostname: tracer-api
+    build:
+      context: ./tracer-api
+      dockerfile: Dockerfile.dist
+    image: neonlabsorg/neon-tracer:latest
+    ports:
+      - "127.0.0.1:8250:8250"
+    command: neon-tracer -l 0.0.0.0:8250 -c tracer_db -d tracer_api_db -u tracer_api_user -p qwerty
+
   postgres:
     container_name: postgres
     image: postgres:14.0
