@@ -12,14 +12,6 @@ x-builder-common: &x-builder-common
     working_dir: /opt/evm_loader
 
 services:
-  validator-builder:
-    build:
-      context: ./solana-account-dumper/ci/docker-rust-nightly
-      dockerfile: Dockerfile
-    image: validator-account-dumper:latest
-    environment:
-      NEON_REVISION: ${NEON_REVISION:-tracing}
-      
   neon-builder:
     <<: *x-builder-common
     container_name: neon-builder
