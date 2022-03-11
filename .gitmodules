@@ -4,10 +4,10 @@
 [submodule "proxy-model.py"]
 	path = proxy-model.py
 	url = https://github.com/neonlabsorg/proxy-model.py.git
-[submodule "solana"]
-  path = solana
-  url = https://github.com/neonlabsorg/solana.git
-[submodule "tracer-api"]
-  path = tracer-api
-  url = https://github.com/neonlabsorg/tracer-api.git
   
+[submodule "solana"]
+	path = solana
+	url = https://github.com/neonlabsorg/solana.git
+[submodule "tracer-api"]
+	path = tracer-api
+	url = https://github.com/neonlabsorg/tracer-api.git
