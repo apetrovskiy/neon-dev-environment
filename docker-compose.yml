@@ -17,7 +17,7 @@ services:
     container_name: builder
     entrypoint: >
       bash -c "cd program && /opt/evm_loader/ci_checks.sh
-      && cargo build --release --all --features tracing
+      && cargo build --release --all
       && cargo build-bpf"
     
   cleaner:
