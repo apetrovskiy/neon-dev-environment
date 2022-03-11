@@ -1,0 +1,13 @@
+#!/bin/bash
+
+cd ./neon-evm
+export NEON_REVISION=$(git rev-parse HEAD)
+export EVM_LOADER_REVISION=$NEON_REVISION
+echo "NEON_REVISION=$NEON_REVISION"
+echo "EVM_LOADER_REVISION=$EVM_LOADER_REVISION"
+cd ../proxy-model.py
+export PROXY_REVISION=$(git rev-parse HEAD)
+echo "PROXY_REVISION=$PROXY_REVISION"
+cd ../
+
+$@
