@@ -1,44 +1,23 @@
 version: "3"
 
-x-builder-common: &x-builder-common
-    build:
-      context: ./images
-      dockerfile: Builder-Dockerfile
-    image: evm_builder:latest
-    environment:
-      NEON_REVISION: ${NEON_REVISION:-tracing}
-    volumes:
-      - ./neon-evm/evm_loader/:/opt/evm_loader/
-    working_dir: /opt/evm_loader
-
 services:
-  neon-builder:
-    <<: *x-builder-common
-    container_name: neon-builder
-    entrypoint: >
-      bash -c "cd program && /opt/evm_loader/ci_checks.sh
-      && cargo build --release --all --features tracing
-      && cargo build-bpf"
-    
-  neon-cleaner:
-    <<: *x-builder-common
-    container_name: neon-cleaner
-    entrypoint: cargo clean
-    
   tracer_db:
+    build:
+      context: ./tracer-api/clickhouse
+      dockerfile: Dockerfile
     container_name: tracer_db
     hostname: tracer_db
-    image: yandex/clickhouse-server:21.3.20.1
+    image: neonlabsorg/clickhouse:ci-tracing-api
     expose:
       - "8123"
       - "9000"
       - "9009"
     volumes:
       - ./tracer-api-data:/var/lib/clickhouse
-      - ./tracer-api/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ./tracer-api/clickhouse/users.xml:/etc/clickhouse-server/users.d/user.xml
-      - ./tracer-api/clickhouse/202110061400_initial.up.sql:/etc/clickhouse-server/schema.sql
-      - ./tracer-api/clickhouse/deploy.sh:/docker-entrypoint-initdb.d/deploy.sh
+      #- ./tracer-api/clickhouse/config.xml:/etc/clickhouse-server/config.xml
+      #- ./tracer-api/clickhouse/users.xml:/etc/clickhouse-server/users.d/user.xml
+      #- ./tracer-api/clickhouse/202110061400_initial.up.sql:/etc/clickhouse-server/schema.sql
+      #- ./tracer-api/clickhouse/deploy.sh:/docker-entrypoint-initdb.d/deploy.sh
     healthcheck:
       test: ["CMD-SHELL", "clickhouse-client -q 'SELECT 1'"]
       interval: 5s
@@ -53,7 +32,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEON_REVISION: ${NEON_REVISION:-tracing}
-    image: neonlabsorg:solana-v1.8.12-account-dumper
+    image: neonlabsorg/solana:ci-tracing-api
     environment:
       NEON_REVISION: ${NEON_REVISION:-tracing}
       SOLANA_URL: http://validator:8899
@@ -89,7 +68,7 @@ services:
 
   deploy-evm:
     container_name: evm_loader
-    image: neonlabsorg/evm_loader:${EVM_LOADER_REVISION:-latest}
+    image: neonlabsorg/evm_loader:ci-tracing-api
     environment:
       - SOLANA_URL=http://validator:8899
     networks:
@@ -98,9 +77,6 @@ services:
       validator:
         condition: service_healthy
     command: bash -c "create-test-accounts.sh 1 && deploy-evm.sh"
-    volumes:
-      - ./neon-evm/evm_loader/target/release/neon-cli:/opt/neon-cli
-      - ./neon-evm/evm_loader/target/deploy/evm_loader.so:/opt/evm_loader.so
 
   neon-tracer:
     container_name: tracer-api
@@ -221,59 +197,6 @@ services:
   #  volumes:
   #    - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
   #    - ./proxy-model.py:/opt
-  
-  proxy-test:
-    container_name: proxy-test
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
-    environment:
-      SOLANA_URL: http://validator:8899
-      PROXY_URL: http://proxy:9090/solana
-      EVM_LOADER: 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
-      EXTRA_GAS: 100000
-      POSTGRES_DB: neon-db
-      POSTGRES_USER: neon-proxy
-      POSTGRES_PASSWORD: neon-proxy-pass
-      POSTGRES_HOST: postgres
-      #TESTNAME: account_whitelist
-      #TESTNAME: airdropper_integration
-      #TESTNAME: airdropper
-      #TESTNAME: contract_reverting
-      #TESTNAME: create_account_block
-      #TESTNAME: environment
-      #TESTNAME: erc20_wrapper_contract
-      #TESTNAME: eth_estimateGass
-      #TESTNAME: eth_getBlockByNumber
-      #TESTNAME: eth_getLogs
-      #TESTNAME: eth_sendRawTransaction
-      #TESTNAME: gas_price_calculator
-      #TESTNAME: indexer_work
-      #TESTNAME: neon_cli_version
-      #TESTNAME: neon_faucet
-      #TESTNAME: neon_proxy_version
-      TESTNAME: neon_token
-      #TESTNAME: neon_tx_sender
-      #TESTNAME: operator_spending
-      #TESTNAME: permission_token
-      #TESTNAME: pyth_network_client
-      #TESTNAME: query_account_contract
-      #TESTNAME: read_only_accounts
-      #TESTNAME: resize_storage_account
-      #TESTNAME: retry_on_blocked_accounts
-      #TESTNAME: trx_receipts_storage
-      #TESTNAME: user_stories
-      #TESTNAME: utils
-      #TESTNAME: web3_clientVersion
-    hostname: proxy-test
-    depends_on:
-      - proxy
-      #- faucet
-      #- airdropper
-    networks:
-      - net
-    entrypoint: proxy/deploy-test.sh
-    volumes:
-      #- ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
-      - ./proxy-model.py:/opt
 
 networks:
   net:
