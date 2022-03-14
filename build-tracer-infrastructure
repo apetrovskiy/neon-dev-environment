@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cd ./neon-evm
+./.buildkite/steps/build-image.sh
+
+if [ "$?" -ne "0" ]; then
+  echo "Failed to build Neon-EVM"
+  exit 1
+fi
+
+cd ../
+
+./run docker-compose -f docker-compose-tracer.yml build tracer_db
+
+if [ "$?" -ne "0" ]; then
+  echo "Failed to build Tracer DB"
+  exit 1
+fi
+
+./run docker-compose -f docker-compose-tracer.yml build validator
+
+if [ "$?" -ne "0" ]; then
+  echo "Failed to build Validator"
+  exit 1
+fi
+
+./run docker-compose -f docker-compose-tracer.yml build neon-tracer
+
+if [ "$?" -ne "0" ]; then
+  echo "Failed to build Tracer API"
+  exit 1
+fi

@@ -8,3 +8,5 @@
 !.gitignore
 !/images
 !/images/*
+!build-tracer-infrastructure
+!start-tracer
