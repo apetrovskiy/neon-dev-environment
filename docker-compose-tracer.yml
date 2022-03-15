@@ -14,6 +14,7 @@ services:
       - "9009"
     volumes:
       - ./tracer-api-data:/var/lib/clickhouse
+      - ./tracer-api-logs:/var/log/clickhouse-server
       #- ./tracer-api/clickhouse/config.xml:/etc/clickhouse-server/config.xml
       #- ./tracer-api/clickhouse/users.xml:/etc/clickhouse-server/users.d/user.xml
       #- ./tracer-api/clickhouse/202110061400_initial.up.sql:/etc/clickhouse-server/schema.sql
