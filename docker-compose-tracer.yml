@@ -21,6 +21,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
+    networks:
+      - net
     
   validator:
     container_name: validator
@@ -90,6 +92,8 @@ services:
     ports:
       - "127.0.0.1:8250:8250"
     command: neon-tracer -l 0.0.0.0:8250 -c tracer_db -d tracer_api_db -u tracer_api_user -p qwerty --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
+    networks:
+      - net
 
   postgres:
     container_name: postgres
