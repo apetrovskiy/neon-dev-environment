@@ -26,11 +26,6 @@ services:
     
   validator:
     container_name: validator
-    build:
-      context: ./solana
-      dockerfile: Dockerfile
-      args:
-        NEON_REVISION: ${NEON_REVISION:-tracing}
     image: neonlabsorg/solana:ci-tracing-api-v0.6.0
     environment:
       NEON_REVISION: ${NEON_REVISION:-tracing}
@@ -152,24 +147,73 @@ services:
     entrypoint: proxy/run-test-proxy.sh
     
   neon-tracer:
-    container_name: tracer-api
-    hostname: tracer-api
+    container_name: neon-tracer
+    hostname: neon-tracer
     build:
       context: tracer-api/
       dockerfile: Dockerfile
       args:
         NEON_REVISION: ${NEON_REVISION:-tracing}
+    environment:
+      RUST_BACKTRACE: 1
     image: neonlabsorg/neon-tracer:latest
     depends_on:
       tracer_db:
         condition: service_healthy
       proxy:
         condition: service_started
+    expose:
+      - "8250"
     ports:
       - "127.0.0.1:8250:8250"
-    command: neon-tracer -l 0.0.0.0:8250 -c tracer_db -d tracer_api_db -u tracer_api_user -p qwerty --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
+    command: >
+      neon-tracer 
+      -l 0.0.0.0:8250 
+      -c http://tracer_db:8123/ 
+      -d tracer_api_db 
+      -u tracer_api_user 
+      -p qwerty 
+      --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
     networks:
       - net
+      
+  faucet:
+    container_name: faucet
+    image: neonlabsorg/proxy:ci-tracing-api-v0.6.0
+    environment:
+      FAUCET_RPC_PORT: 3333
+      FAUCET_RPC_ALLOWED_ORIGINS: '["http://neon-tracer-test"]'
+      FAUCET_WEB3_ENABLE: 'false'
+      WEB3_RPC_URL: 'http://proxy:9090/solana'
+      WEB3_PRIVATE_KEY: ''
+      NEON_ERC20_TOKENS:
+      NEON_ERC20_MAX_AMOUNT: 1000
+      FAUCET_SOLANA_ENABLE: 'true'
+      SOLANA_URL: 'http://validator:8899'
+      NEON_OPERATOR_KEYFILE: '/root/.config/solana/id.json'
+      NEON_ETH_MAX_AMOUNT: 1000
+      TEST_FAUCET_INIT_NEON_BALANCE: 100000
+    hostname: faucet
+    expose:
+      - "3333"
+    networks:
+      - net
+    entrypoint: ./run-test-faucet.sh
+      
+  neon-tracer-test:
+    container_name: neon-tracer-test
+    hostname: neon-tracer-test
+    build:
+      context: tracing-api-tests/
+      dockerfile: Dockerfile
+    image: neonlabsorg/neon-tracer-test:latest
+    networks:
+      - net
+    depends_on:
+      faucet:
+        condition: service_started
+    volumes:
+      - ./tracing-api-tests/resources:/opt/resources
 
 networks:
   net:
