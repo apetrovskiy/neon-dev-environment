@@ -28,7 +28,7 @@ services:
     container_name: validator
     image: neonlabsorg/solana:ci-tracing-api-v0.6.0
     environment:
-      NEON_REVISION: ${NEON_REVISION:-tracing}
+      NEON_REVISION: ${NEON_REVISION:-ci-tracing-api-v0.6.0}
       SOLANA_URL: http://validator:8899
       RUST_LOG: solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
       SOLANA_RUN_SH_VALIDATOR_ARGS: >
@@ -153,9 +153,10 @@ services:
       context: tracer-api/
       dockerfile: Dockerfile
       args:
-        NEON_REVISION: ${NEON_REVISION:-tracing}
+        NEON_REVISION: ${NEON_REVISION:-ci-tracing-api-v0.6.0}
     environment:
       RUST_BACKTRACE: 1
+      RUST_LOG: debug
     image: neonlabsorg/neon-tracer:latest
     depends_on:
       tracer_db:
@@ -209,11 +210,12 @@ services:
     image: neonlabsorg/neon-tracer-test:latest
     networks:
       - net
-    depends_on:
-      faucet:
-        condition: service_started
+    #depends_on:
+    #  faucet:
+    #    condition: service_started
     volumes:
       - ./tracing-api-tests/resources:/opt/resources
+      - ./tracing-api-tests/entrypoint.sh:/opt/entrypoint.sh
 
 networks:
   net:
