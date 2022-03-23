@@ -27,6 +27,9 @@ services:
   validator:
     container_name: validator
     image: neonlabsorg/solana:ci-tracing-api-v0.5.1
+    build:
+      context: ./solana
+      dockerfile: Dockerfile
     environment:
       NEON_REVISION: ${NEON_REVISION:-ci-tracing-api-v0.5.1}
       SOLANA_URL: http://validator:8899
@@ -110,7 +113,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      evm_loader:
+      deploy-evm:
         condition: service_completed_successfully
     ports:
       - 127.0.0.1:9090:9090
