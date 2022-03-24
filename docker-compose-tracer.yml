@@ -33,7 +33,7 @@ services:
     environment:
       NEON_REVISION: ${NEON_REVISION:-ci-tracing-api-v0.5.1}
       SOLANA_URL: http://validator:8899
-      RUST_LOG: solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+      RUST_LOG: solana_runtime::system_instruction_processor=debug,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
       SOLANA_RUN_SH_VALIDATOR_ARGS: >
         --enable-account-dumper
         --dumper-db-url http://tracer_db:8123
@@ -146,15 +146,15 @@ services:
       - "127.0.0.1:8250:8250"
     command: >
       neon-tracer 
-      -l 0.0.0.0:8250 
-      -c http://tracer_db:8123/ 
-      -d tracer_api_db 
-      -u tracer_api_user 
-      -p qwerty 
+      -l 0.0.0.0:8250
+      -c http://tracer_db:8123
+      -d tracer_api_db
+      -u validator_user
+      -p qwerty
       --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
     networks:
       - net
-      
+  
   neon-tracer-test:
     container_name: neon-tracer-test
     hostname: neon-tracer-test
@@ -164,11 +164,8 @@ services:
     image: neonlabsorg/neon-tracer-test:latest
     networks:
       - net
-    #depends_on:
-    #  faucet:
-    #    condition: service_started
     volumes:
-      - ./tracing-api-tests/resources:/opt/resources
+      #- ./tracing-api-tests/resources:/opt/resources
       - ./tracing-api-tests/entrypoint.sh:/opt/entrypoint.sh
 
 networks:
