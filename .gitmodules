@@ -11,3 +11,6 @@
 [submodule "tracer-api"]
 	path = tracer-api
 	url = https://github.com/neonlabsorg/tracer-api.git
+[submodule "tracing-api-tests"]
+	path = tracing-api-tests
+	url = https://github.com/neonlabsorg/tracing-api-tests
