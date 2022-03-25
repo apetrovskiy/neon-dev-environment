@@ -65,7 +65,7 @@ services:
 
   deploy-evm:
     container_name: deploy-evm
-    image: neonlabsorg/evm_loader:ci-tracing-api-v0.5.1
+    image: neonlabsorg/evm_loader:ci-tracing-api-develop-1.8.12
     environment:
       - SOLANA_URL=http://validator:8899
     networks:
@@ -180,7 +180,7 @@ services:
       context: tracer-api/
       dockerfile: Dockerfile
       args:
-        NEON_REVISION: ${NEON_REVISION:-ci-tracing-api-v0.5.1}
+        NEON_REVISION: ci-tracing-api-develop-1.8.12
     environment:
       RUST_BACKTRACE: 1
       RUST_LOG: debug
@@ -204,6 +204,29 @@ services:
       --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
     networks:
       - net
+      
+  faucet:
+    container_name: faucet
+    image: neonlabsorg/proxy:latest
+    environment:
+      FAUCET_RPC_PORT: 3333
+      FAUCET_RPC_ALLOWED_ORIGINS: '["http://neon-tracer-test"]'
+      FAUCET_WEB3_ENABLE: 'false'
+      WEB3_RPC_URL: 'http://proxy:9090/solana'
+      WEB3_PRIVATE_KEY: ''
+      NEON_ERC20_TOKENS:
+      NEON_ERC20_MAX_AMOUNT: 1000
+      FAUCET_SOLANA_ENABLE: 'true'
+      SOLANA_URL: 'http://validator:8899'
+      NEON_OPERATOR_KEYFILE: '/root/.config/solana/id.json'
+      NEON_ETH_MAX_AMOUNT: 1000
+      TEST_FAUCET_INIT_NEON_BALANCE: 100000
+    hostname: faucet
+    expose:
+      - "3333"
+    networks:
+      - net
+    entrypoint: ./run-test-faucet.sh
   
   neon-tracer-test:
     container_name: neon-tracer-test
