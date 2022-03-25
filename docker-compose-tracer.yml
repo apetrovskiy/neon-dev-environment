@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: tracer_db
     hostname: tracer_db
-    image: neonlabsorg/clickhouse:ci-tracing-api-v0.5.1
+    image: neonlabsorg/clickhouse:ci-tracing-api-develop
     expose:
       - "8123"
       - "9000"

@@ -10,3 +10,4 @@
 !/images/*
 !build-tracer-infrastructure
 !start-tracer
+!tracing-api-tests
