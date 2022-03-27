@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker-compose build tracer_db neon-tracer neon-tracer-test

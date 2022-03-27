@@ -27,9 +27,6 @@ services:
   validator:
     container_name: validator
     image: neonlabsorg/solana:ci-tracing-api-develop
-    build:
-      context: ./solana
-      dockerfile: Dockerfile
     environment:
       NEON_REVISION: ci-tracing-api-develop-1.8.12
       SOLANA_URL: http://validator:8899
