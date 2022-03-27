@@ -1,37 +1,47 @@
 version: "3"
 
-x-builder-common: &x-builder-common
-    build:
-      context: ./images
-      dockerfile: Builder-Dockerfile
-    image: evm_builder:latest
-    environment:
-      NEON_REVISION: ${NEON_REVISION:-latest}
-    volumes:
-      - ./neon-evm/evm_loader/:/opt/evm_loader/
-    working_dir: /opt/evm_loader
-
 services:
-  builder:
-    <<: *x-builder-common
-    container_name: builder
-    entrypoint: >
-      bash -c "cd program && /opt/evm_loader/ci_checks.sh
-      && cargo build --release --all
-      && cargo build-bpf"
+  tracer_db:
+    build:
+      context: ./tracer-api/clickhouse
+      dockerfile: Dockerfile
+    container_name: tracer_db
+    hostname: tracer_db
+    image: neonlabsorg/clickhouse:ci-tracing-api-develop
+    expose:
+      - "8123"
+      - "9000"
+      - "9009"
+    volumes:
+      - ./tracer-api-data:/var/lib/clickhouse
+      - ./tracer-api-logs:/var/log/clickhouse-server
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client -q 'SELECT 1'"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    networks:
+      - net
     
-  cleaner:
-    <<: *x-builder-common
-    container_name: cleaner
-    entrypoint: cargo clean
-    
-  solana:
-    container_name: solana
-    image: neonlabsorg/solana:${SOLANA_REVISION:-v1.8.12-testnet}
+  validator:
+    container_name: validator
+    image: neonlabsorg/solana:ci-tracing-api-develop
+    build:
+      context: ./solana
+      dockerfile: Dockerfile
     environment:
-      SOLANA_URL: http://solana:8899
-      RUST_LOG: solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
-    hostname: solana
+      NEON_REVISION: ci-tracing-api-develop-1.8.12
+      SOLANA_URL: http://validator:8899
+      RUST_LOG: solana_runtime::system_instruction_processor=debug,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+      SOLANA_RUN_SH_VALIDATOR_ARGS: >
+        --enable-account-dumper
+        --dumper-db-url http://tracer_db:8123
+        --dumper-db-database tracer_api_db
+        --dumper-db-user validator_user
+        --dumper-db-password qwerty
+        --dumper-program-ids 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
+    hostname: validator
     ports:
       - 0.0.0.0:8899:8899
     expose:
@@ -42,28 +52,28 @@ services:
       - "8001-8009/udp"
     networks:
       - net
+    depends_on:
+      tracer_db:
+        condition: service_healthy
     healthcheck:
       # Must be available from outside (calling without -u causes premature result)
-      test: [ CMD-SHELL, "solana cluster-version -u http://solana:8899" ]
+      test: [ CMD-SHELL, "solana cluster-version -u http://validator:8899" ]
       interval: 5s
       timeout: 10s
       retries: 10
       start_period: 10s
 
-  deploy-evm:
+  evm_loader:
     container_name: evm_loader
-    image: neonlabsorg/evm_loader:${EVM_LOADER_REVISION:-latest}
+    image: neonlabsorg/evm_loader:ci-tracing-api-develop-1.8.12
     environment:
-      - SOLANA_URL=http://solana:8899
+      - SOLANA_URL=http://validator:8899
     networks:
       - net
     depends_on:
-      solana:
+      validator:
         condition: service_healthy
     command: bash -c "create-test-accounts.sh 1 && deploy-evm.sh"
-    volumes:
-      - ./neon-evm/evm_loader/target/release/neon-cli:/opt/neon-cli
-      - ./neon-evm/evm_loader/target/deploy/evm_loader.so:/opt/evm_loader.so
 
   postgres:
     container_name: postgres
@@ -87,46 +97,66 @@ services:
       retries: 10
       start_period: 5s
       
+  dbcreation:
+    container_name: dbcreation
+    image: neonlabsorg/proxy:ci-tracing-api-develop
+    environment:
+      SOLANA_URL: http://validator:8899
+      POSTGRES_DB: neon-db
+      POSTGRES_USER: neon-proxy
+      POSTGRES_PASSWORD: neon-proxy-pass
+      POSTGRES_HOST: postgres
+    entrypoint: proxy/run-dbcreation.sh
+    networks:
+      - net
+    depends_on:
+      postgres:
+        condition: service_healthy
+        
   indexer:
     container_name: indexer
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
+    image: neonlabsorg/proxy:ci-tracing-api-develop
     environment:
-      SOLANA_URL: http://solana:8899
+      SOLANA_URL: http://validator:8899
       POSTGRES_DB: neon-db
       POSTGRES_USER: neon-proxy
       POSTGRES_PASSWORD: neon-proxy-pass
       CONFIG: ci
     hostname: indexer
     depends_on:
+      evm_loader:
+        condition: service_completed_successfully
+      dbcreation:
+        condition: service_completed_successfully
       postgres:
+        condition: service_healthy
+      validator:
         condition: service_healthy
     networks:
       - net
     entrypoint: proxy/run-indexer.sh
-
+  
   proxy:
     container_name: proxy
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
+    image: neonlabsorg/proxy:ci-tracing-api-develop
     environment:
-      SOLANA_URL: http://solana:8899
+      SOLANA_URL: http://validator:8899
+      FAUCET_URL: http://faucet:3333
       POSTGRES_DB: neon-db
       POSTGRES_USER: neon-proxy
       POSTGRES_PASSWORD: neon-proxy-pass
-      NEON_CLI_TIMEOUT: 2
       LOG_SENDING_SOLANA_TRANSACTION: "YES"
       LOG_NEON_CLI_DEBUG: "YES"
       FUZZING_BLOCKHASH: "YES"
       CONFIG: ci
-      PP_SOLANA_URL: https://api.devnet.solana.com
-      PYTH_MAPPING_ACCOUNT: BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2
+      PP_SOLANA_URL: ${CI_PP_SOLANA_URL:-https://api.devnet.solana.com}
+      PYTH_MAPPING_ACCOUNT: ${CI_PYTH_MAPPING_ACCOUNT:-BmA9Z6FjioHJPpjT39QazZyhDRUdZy2ezwx4GiDdE2u2}
       MIN_OPERATOR_BALANCE_TO_WARN: 4565760000 # = 913152000 * 5 (5 storage accounts) = 4.56576 SOL
       MIN_OPERATOR_BALANCE_TO_ERR: 913152000 # = solana rent 131072 (= Rent-exempt minimum: 0.913152 SOL) SOLs to create a storage
+      MINIMAL_GAS_PRICE: 1
+      OPERATOR_GAS_ACCOUNTS: 0x8966Ef2ae7A109Fd0977F5151b4607dc42929fBD;0x619d670152103a972B67a45b9Be764FF11979E4E
     hostname: proxy
     depends_on:
-      solana:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
       indexer:
         condition: service_started
     ports:
@@ -136,127 +166,95 @@ services:
     networks:
       - net
     entrypoint: proxy/run-test-proxy.sh
-    volumes:
-      - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
-      - ./proxy-model.py:/opt
-     
+    healthcheck:
+      test: [ CMD-SHELL, "/opt/health_check_proxy.sh" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+    
+  neon-tracer:
+    container_name: neon-tracer
+    hostname: neon-tracer
+    build:
+      context: tracer-api/
+      dockerfile: Dockerfile
+      args:
+        NEON_REVISION: ci-tracing-api-develop-1.8.12
+    environment:
+      RUST_BACKTRACE: 1
+      RUST_LOG: debug
+    image: neonlabsorg/neon-tracer:latest
+    depends_on:
+      tracer_db:
+        condition: service_healthy
+    expose:
+      - "8250"
+    ports:
+      - "127.0.0.1:8250:8250"
+    command: >
+      neon-tracer 
+      -l 0.0.0.0:8250
+      -c http://tracer_db:8123
+      -d tracer_api_db
+      -u validator_user
+      -p qwerty
+      --evm-loader 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
+    networks:
+      - net
+      
   faucet:
     container_name: faucet
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
+    image: neonlabsorg/proxy:ci-tracing-api-develop
     environment:
-      FAUCET_RPC_BIND: '0.0.0.0'
       FAUCET_RPC_PORT: 3333
-      FAUCET_RPC_ALLOWED_ORIGINS: '["http://airdropper", "http://localhost"]'
+      FAUCET_RPC_ALLOWED_ORIGINS: '["http://neon-tracer-test"]'
       FAUCET_WEB3_ENABLE: 'false'
       WEB3_RPC_URL: 'http://proxy:9090/solana'
       WEB3_PRIVATE_KEY: ''
       NEON_ERC20_TOKENS:
       NEON_ERC20_MAX_AMOUNT: 1000
       FAUCET_SOLANA_ENABLE: 'true'
-      SOLANA_URL: 'http://solana:8899'
+      SOLANA_URL: 'http://validator:8899'
       NEON_OPERATOR_KEYFILE: '/root/.config/solana/id.json'
       NEON_ETH_MAX_AMOUNT: 1000
-      TEST_FAUCET_INIT_NEON_BALANCE: 1000000000
+      TEST_FAUCET_INIT_NEON_BALANCE: 100000
     hostname: faucet
     expose:
-      - 3333
+      - "3333"
     ports:
       - 127.0.0.1:3333:3333
-    expose:
-      - "3333"
     networks:
       - net
     entrypoint: ./run-test-faucet.sh
     depends_on:
       proxy:
-        condition: service_started
-    volumes:
-      - ./neon-evm/evm_loader/target/release/faucet:/spl/bin/faucet
-      - ./proxy-model.py:/opt
-  
-  airdropper:
-    container_name: airdropper
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
-    environment:
-      POSTGRES_DB: neon-db
-      POSTGRES_USER: neon-proxy
-      POSTGRES_PASSWORD: neon-proxy-pass
-      POSTGRES_HOST: postgres
-      SOLANA_URL: http://solana:8899
-      FAUCET_URL: http://faucet:3333
-      NEON_CLI_TIMEOUT: 2
-      INDEXER_ERC20_WRAPPER_WHITELIST: ANY
-      LOG_LEVEL: INFO
-      PRICE_UPDATE_INTERVAL: 10
-      START_SLOT: LATEST
-      PP_SOLANA_URL: https://api.mainnet-beta.solana.com
-      PYTH_MAPPING_ACCOUNT: AHtgzX45WTKfkPG53L6WYhGEXwQkN1BVknET3sVsLL8J
-      MAX_CONFIDENCE_INTERVAL: 0.01
-    hostname: airdropper
-    entrypoint: ./run-airdropper.sh
-    networks:
-      - net
-    depends_on:
-      postgres:
         condition: service_healthy
-      faucet:
-        condition: service_started
-    volumes:
-      - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
-      - ./proxy-model.py:/opt
-
-  proxy-test:
-    container_name: proxy-test
-    image: neonlabsorg/proxy:${PROXY_REVISION:-latest}
-    environment:
-      SOLANA_URL: http://solana:8899
-      PROXY_URL: http://proxy:9090/solana
-      EVM_LOADER: 53DfF883gyixYNXnM7s5xhdeyV8mVk9T4i2hGV9vG9io
-      EXTRA_GAS: 100000
-      POSTGRES_DB: neon-db
-      POSTGRES_USER: neon-proxy
-      POSTGRES_PASSWORD: neon-proxy-pass
-      POSTGRES_HOST: postgres
-      #TESTNAME: account_whitelist
-      #TESTNAME: airdropper_integration
-      #TESTNAME: airdropper
-      #TESTNAME: contract_reverting
-      #TESTNAME: create_account_block
-      #TESTNAME: environment
-      #TESTNAME: erc20_wrapper_contract
-      #TESTNAME: eth_estimateGass
-      #TESTNAME: eth_getBlockByNumber
-      #TESTNAME: eth_getLogs
-      #TESTNAME: eth_sendRawTransaction
-      #TESTNAME: gas_price_calculator
-      #TESTNAME: indexer_work
-      #TESTNAME: neon_cli_version
-      #TESTNAME: neon_faucet
-      #TESTNAME: neon_proxy_version
-      TESTNAME: neon_token
-      #TESTNAME: neon_tx_sender
-      #TESTNAME: operator_spending
-      #TESTNAME: permission_token
-      #TESTNAME: pyth_network_client
-      #TESTNAME: query_account_contract
-      #TESTNAME: read_only_accounts
-      #TESTNAME: resize_storage_account
-      #TESTNAME: retry_on_blocked_accounts
-      #TESTNAME: trx_receipts_storage
-      #TESTNAME: user_stories
-      #TESTNAME: utils
-      #TESTNAME: web3_clientVersion
-    hostname: proxy-test
-    depends_on:
-      - proxy
-      - faucet
-      - airdropper
+    healthcheck:
+      test: [ CMD-SHELL, "/opt/health_check_faucet.sh" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 5s 
+  
+  neon-tracer-test:
+    container_name: neon-tracer-test
+    hostname: neon-tracer-test
+    build:
+      context: tracing-api-tests/
+      dockerfile: Dockerfile
+    image: neonlabsorg/neon-tracer-test:latest
     networks:
       - net
-    entrypoint: proxy/deploy-test.sh
     volumes:
-      - ./neon-evm/evm_loader/target/release/neon-cli:/spl/bin/neon-cli
-      - ./proxy-model.py:/opt
+      - ./tracing-api-tests/entrypoint.sh:/opt/entrypoint.sh
+    depends_on:
+      faucet:
+        condition: service_healthy
+      proxy:
+        condition: service_healthy
+      neon-tracer:
+        condition: service_started
 
 networks:
   net:

@@ -10,3 +10,5 @@
 !/images/*
 !build-tracer-infrastructure
 !start-tracer
+!Schemas.odg
+!Schemas.pdf

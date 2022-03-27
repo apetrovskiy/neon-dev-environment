@@ -1,6 +1,0 @@
-#!/bin/bash
-
-./run docker-compose -f docker-compose-tracer.yml up deploy-evm
-./run docker-compose -f docker-compose-tracer.yml up -d proxy
-./run docker-compose -f docker-compose-tracer.yml up neon-tracer
-
