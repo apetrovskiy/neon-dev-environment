@@ -2,7 +2,6 @@
 /*
 !run
 !docker-compose.yml
-!docker-compose-tracer.yml
 !README.md
 !.dockerignore
 !.gitignore
@@ -10,3 +9,5 @@
 !/images/*
 !build-tracer-infrastructure
 !start-tracer
+!run.sh
+!build.sh
