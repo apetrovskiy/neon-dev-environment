@@ -8,6 +8,3 @@
 [submodule "solana"]
 	path = solana
 	url = https://github.com/neonlabsorg/solana.git
-[submodule "tracer-api"]
-	path = tracer-api
-	url = https://github.com/neonlabsorg/tracer-api.git
